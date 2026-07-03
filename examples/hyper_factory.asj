@@ -1,0 +1,24 @@
+# Hyper-complex workflow scenario for AturSaja Hyper Orchestrator
+PROJECT HyperFactory
+
+RESOURCE cpu 24
+RESOURCE gpu 6
+RESOURCE memory 128
+RESOURCE io 18
+RESOURCE network 12
+
+TASK intake duration=45 priority=7 retries=0 fail=0.01 deadline=120 uses=cpu:4,memory:8,io:4 tags=entry,batch risk=low
+TASK profile duration=35 priority=8 retries=1 fail=0.02 deadline=150 uses=cpu:4,memory:8,io:2 depends=intake tags=analysis risk=medium
+TASK sanitize duration=50 priority=9 retries=1 fail=0.01 deadline=220 uses=cpu:5,memory:10,io:3 depends=intake tags=security risk=medium
+TASK shard duration=30 priority=6 retries=1 fail=0.02 deadline=250 uses=cpu:3,memory:6,network:3 depends=profile,sanitize tags=split risk=low
+TASK feature_alpha duration=80 priority=10 retries=1 fail=0.04 deadline=420 uses=cpu:6,memory:14,gpu:1 depends=shard tags=ml risk=medium
+TASK feature_beta duration=70 priority=10 retries=1 fail=0.03 deadline=420 uses=cpu:5,memory:12,gpu:1 depends=shard tags=ml risk=medium
+TASK feature_gamma duration=95 priority=9 retries=2 fail=0.05 deadline=460 uses=cpu:7,memory:16,gpu:2 depends=shard tags=deep risk=high
+TASK anomaly_scan duration=55 priority=8 retries=1 fail=0.03 deadline=360 uses=cpu:4,memory:8,network:2 depends=sanitize tags=security risk=medium
+TASK synthesis duration=60 priority=11 retries=1 fail=0.02 deadline=560 uses=cpu:6,memory:18,network:2 depends=feature_alpha,feature_beta,feature_gamma tags=fusion risk=high
+TASK stress_test duration=75 priority=10 retries=2 fail=0.06 deadline=620 uses=cpu:8,memory:20,gpu:2,io:3 depends=synthesis,anomaly_scan tags=qa risk=high
+TASK compliance duration=40 priority=7 retries=1 fail=0.02 deadline=610 uses=cpu:3,memory:6,network:4 depends=anomaly_scan tags=audit risk=medium
+TASK optimize duration=65 priority=9 retries=2 fail=0.03 deadline=690 uses=cpu:6,memory:12,gpu:1 depends=stress_test tags=tuning risk=medium
+TASK packaging duration=35 priority=8 retries=1 fail=0.01 deadline=740 uses=cpu:3,memory:4,io:4 depends=optimize,compliance tags=release risk=low
+TASK rollout duration=25 priority=12 retries=1 fail=0.02 deadline=780 uses=cpu:2,memory:3,network:5 depends=packaging tags=deploy risk=medium
+TASK telemetry duration=45 priority=6 retries=0 fail=0.01 deadline=840 uses=cpu:2,memory:4,network:3 depends=rollout tags=observe risk=low
